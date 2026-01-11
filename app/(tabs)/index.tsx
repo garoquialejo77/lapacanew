@@ -1,88 +1,343 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Card } from "@/components/Card";
+import { NavHeader } from "@/components/NavHeader";
+import { HelloWave } from "@/components/hello-wave";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { validationsNewUser } from "@/constants/validations";
+import { validate } from "@/utils/validator";
+import { FontAwesome } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRootNavigation, useRouter } from 'expo-router';
+import { useContext, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View
+} from "react-native";
+import { SesionContext } from "../contexts/sesionProvider";
+import { sendMe, sendRegister } from "../services/authService";
+import { getMessages } from "../services/messageService";
+import { getProducts } from "../services/productService";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+type Product = {
+  id: number;
+  title: string;
+  description: string;
+  image1: string;
+  image2: string | null;
+  image3: string | null;
+  image4: string | null;
+  user: string;
+  category: string;
+  price: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type SesionContent = {
+  isSessionSuccess: Boolean;
+  setIsSessionSuccess: (c: any) => void;
+  user: string;
+  setUser: (c: any) => void;
+  messagesNumber: string;
+  setMessagesNumber: (c: any) => void;
+};
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const rootNavigation = useRootNavigation ();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalRegisterVisible, setModalRegisterVisible] = useState(false);
+  const [modalLoginVisible, setModalLoginVisible] = useState(false);
+  const [isRegisterValidated, setIsRegisterValidated] = useState(false);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const [products, setProducts] = useState<any[]>([]);
+  const [text, setText] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [page, setPage] = useState(1);
+  const [success, setSuccess] = useState(false);
+  const [lastPage, setLastPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [isLoadingRegister, setIsLoadingRegister] = useState(false);
+  const [token, setToken] = useState("");
+  const router = useRouter();
+
+  const {
+    isSessionSuccess,
+    setIsSessionSuccess,
+    user,
+    setUser,
+    messagesNumber,
+    setMessagesNumber,
+  } = useContext(SesionContext) as SesionContent;
+
+  useEffect(() => {
+
+   loadProducts();
+    if (text) {
+      loadProducts(page, text);
+    }
+
+    onValidateForm();
+  }, [text, email, password, confirmPassword, success]);
+
+  function onChangeText(event: any) {
+    setText(event);
+    setPage(1);
+  }
+
+  async function validateToken(tokenTemp : string){
+    console.log("el token", token)
+    try{
+      const responses = await sendMe(tokenTemp);
+      console.log("responseeeee", responses.message)
+      if(responses.message === "Unauthenticated."){
+        console.log("mensjae",responses.message)
+        AsyncStorage.removeItem("auth")
+      }
+    }catch(error : unknown){
+      console.log("el errror", error)
+
+    
+    }
+
+  }
+
+  function onChangeName(event: any) {
+    setName(event);
+  }
+
+  function onChangeEmail(event: any) {
+    setEmail(event);
+  }
+
+  function onChangePassword(event: any) {
+    setPassword(event);
+  }
+
+  function onChangeConfirmPassword(event: any) {
+    setConfirmPassword(event);
+    onValidateForm();
+  }
+
+  async function cargarToken  ()  {
+    const tokenTemp = await AsyncStorage.getItem('auth');
+    if(tokenTemp){
+     // await setToken(token);
+      await validateToken(tokenTemp)
+    }
+
+  };
+
+  const loadProducts = async (pageNumber = 1, search = "") => {
+    console.log("cargar productos")
+
+
+    cargarToken();
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await getProducts(pageNumber, search);
+      setSuccess(true)
+      if (pageNumber === 1) {
+        setProducts(res.data);
+      } else {
+        setProducts((prev) => [...prev, ...res.data]);
+      }
+
+      setPage(res.current_page);
+      setLastPage(res.last_page);
+    } catch (error) {
+      console.error(error);
+    }
+    setLoading(false);
+  };
+
+  function onPressCard(product: Product) {
+    const {
+      id,
+      title,
+      description,
+      image1,
+      image2,
+      image3,
+      image4,
+      price,
+      user,
+    } = product;
+    router.push({
+      pathname: "/detailproduct",
+      params: {
+        id,
+        title,
+        description,
+        image1,
+        image2,
+        image3,
+        image4,
+        price,
+        user,
+      },
+    });
+  }
+
+  async function toogleModal() {
+    console.log("modallll visible");
+    setModalVisible(!modalVisible);
+  }
+
+  function onLogin() {
+  //  setModalVisible(false);
+  //  setModalRegisterVisible(false);
+  //  setModalLoginVisible(true);
+  router.replace('/login')
+  }
+
+  function onRegister() {
+    setModalVisible(false);
+    setModalRegisterVisible(true);
+  }
+
+  function onCancel() {
+    setModalRegisterVisible(false);
+  }
+
+  function onSendLogin() {
+    console.log("send login");
+    setModalLoginVisible(false);
+    //    setIsSessionSuccess(true);
+    //    setUser(1); //TODO  llamar al servicio
+    //    setSuccess(true);
+    //    toogleModal();
+    //    onGetMessages();
+  }
+
+  async function onSendRegister() {
+    setIsLoadingRegister(true);
+    try {
+      const res = await sendRegister(name, email, password);
+      setIsLoadingRegister(false);
+      setModalRegisterVisible(false);
+      if (res?.errors) {
+        console.log("con errorresss", res.errors);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  function onValidateForm() {
+    let validated = true;
+    const data = [{ value: name }, { value: email }, { value: password }];
+    data.forEach((key, index) => {
+      validated =
+        validated && validate(key, validationsNewUser[index].validations);
+      console.log(
+        "es valdiadoooooo",
+        validationsNewUser[index].validations.field,
+        validate(key, validationsNewUser[index].validations)
+      );
+    });
+
+    setIsRegisterValidated(validated && confirmPassword === password);
+  }
+
+  async function onGetMessages() {
+    try {
+      const res = await getMessages(1, user);
+      setMessagesNumber(res.total.toString());
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  return (
+<View style={{ flex: 1 }}>
+
+
+      {success && !loading ? (
+        <View style={{ flex: 1 }}>
+          <NavHeader
+            backgroundColor="black"
+            colorText="white"
+            withLeftIcon="menu"
+            textTitle="La Pacapp"
+            justifyContent="space-between"
+          />
+
+          <View style={styles.containerInput}>
+            <FontAwesome name="search" size={20} color="black" />
+            <TextInput
+              style={[styles.input, { borderColor: "none" }]}
+              onChangeText={onChangeText}
+              value={text}
+              placeholder="Buscar"
+              underlineColorAndroid="transparent"
+            />
+          </View>
+
+          <FlatList
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 16 }}
+            data={products}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <Pressable onPress={() => onPressCard(item)} style={styles.containerCard}>
+                <Card
+                  id={item.id}
+                  title={item.title}
+                  image={item.image1}
+                  footer={item.price}
+                  
+                />
+              </Pressable>
+            )}
+            ListHeaderComponent={
+              <ThemedView style={styles.titleContainer}>
+                <ThemedText type="title">Pacas de Hoy!</ThemedText>
+                <HelloWave />
+              </ThemedView>
+            }
+            ListFooterComponent={
+              loading ? <ActivityIndicator style={{ margin: 10 }} /> : null
+            }
+            onEndReached={() => {
+              if (page < lastPage) {
+                loadProducts(page + 1, text);
+              }
+            }}
+            onEndReachedThreshold={0.5}
+          />
+        </View>
+      ) : (
+        <View style={styles.containerLoader}><ActivityIndicator size="large"></ActivityIndicator></View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1
+},
+  content: {
+    padding: 16,
+  },
+  containerLoader:{
+    display:"flex",
+    justifyContent:"center",
+    height:100
+  },
   titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
+    paddingBottom: 8,
   },
   stepContainer: {
     gap: 8,
@@ -93,6 +348,86 @@ const styles = StyleSheet.create({
     width: 290,
     bottom: 0,
     left: 0,
-    position: 'absolute',
+    position: "absolute",
+  },
+  input: {
+    height: 40,
+    width: "80%",
+    marginLeft: 8,
+    outline: "none",
+  },
+  containerInput: {
+    display: "flex",
+    borderWidth: 1,
+    borderRadius: 10,
+    margin: 16,
+    borderColor: "black",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
+  containerCard:{
+    marginTop: 16
+  },  
+  mt_16: {
+    marginTop: 16,
+  },
+  button: {
+    marginBottom: 16,
+    backgroundColor: "#FFC300",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 16,
+    borderRadius: 20,
+    paddingBottom: 16,
+  },
+  cancel: {
+    backgroundColor: "#000000",
+  },
+  textbutton: {
+    color: "white",
+  },
+  modalcontainer: {
+    backgroundColor: "rgba(0,0,0,0.5)",
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalcontent: {
+    display: "flex",
+    width: "80%",
+    backgroundColor: "white",
+    padding: 16,
+    borderRadius: 10,
+    justifyContent: "center",
+  },
+  inputRegister: {
+    height: 60,
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
+    width: "90%",
+    borderRadius: 10,
+    borderColor: "rgba(33, 150, 243, 1.00)",
+  },
+  titleRegisterText: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  placeHolder: {
+    height: 60,
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
+    width: "90%",
+    borderRadius: 10,
+    borderColor: "rgba(33, 150, 243, 1.00)",
+    color: "gray",
+    fontSize: 10,
+  },
+  disabledButton: {
+    backgroundColor: "#dfdfdf",
   },
 });
