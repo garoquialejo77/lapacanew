@@ -27,7 +27,6 @@ export const newProduct = async (product: any, token:string): Promise<any> => {
     );
     formData.append("user", '1');
     images.forEach((image: any, index: any) => {
-      console.log("uriiiii web ", image.uri)
       formData.append("file", {
         uri: image.uri,
         name: image.file.name,
@@ -75,7 +74,6 @@ export const newProduct = async (product: any, token:string): Promise<any> => {
     );
     formData.append("user", "1");
     images.forEach((image: any, index: any) => {
-      console.log("uriiiii", image.uri)
       formData.append("file", {
         uri: image.uri,
         name: image.file.name,

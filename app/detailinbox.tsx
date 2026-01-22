@@ -10,27 +10,31 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SesionContext } from "./contexts/sesionProvider";
 import { getMessagesDetail, sendAnswer } from "./services/messageService";
 
 type SesionContent = {
+  isSessionSuccess: Boolean;
+  setIsSessionSuccess: (c: any) => void;
   user: string;
   setUser: (c: any) => void;
+  messagesNumber: string;
+  setMessagesNumber: (c: any) => void;
+  token: string;
 };
 
 export default function DetailInboxScreen() {
   const [text, setText] = useState("");
-  const [modalVisible, setModaVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const [modalSuccessVisible, setModalSuccessVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [modalErrorVisible, setModalErrorVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [detailMessages, setDetailMessages] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
-  const { user, setUser } = useContext(SesionContext) as SesionContent;
   const {
     id,
     from,
@@ -45,19 +49,32 @@ export default function DetailInboxScreen() {
     updated_at,
   } = useLocalSearchParams();
 
+  const {
+    isSessionSuccess,
+    setIsSessionSuccess,
+    user,
+    setUser,
+    messagesNumber,
+    setMessagesNumber,
+    token,
+  } = useContext(SesionContext) as SesionContent;
+
   useEffect(() => {
-    loadDetailMessages();
-  }, []);
+    if (isSessionSuccess) {
+      loadDetailMessages();
+    } else {
+      router.replace("/login");
+    }
+  }, [isSessionSuccess]);
 
   function onBack(event: any) {
     router.replace("/inbox");
   }
 
   const loadDetailMessages = async (pageNumber = 1) => {
-    if (loading) return;
-    setLoading(true);
+    setIsLoading(true);
     try {
-      const res = await getMessagesDetail(1, id.toString());
+      const res = await getMessagesDetail(1, id.toString(), token);
       if (pageNumber === 1) {
         setDetailMessages(res.data);
       } else {
@@ -66,64 +83,148 @@ export default function DetailInboxScreen() {
 
       setPage(res.current_page);
       setLastPage(res.last_page);
+      setIsLoading(false);
     } catch (error) {
       console.error(error);
+      setIsLoading(false);
     }
-    setLoading(false);
   };
 
-  async function toogleModal(isSubmit: Boolean) {
-    console.log("aqui")
-    if (isSubmit && text.length > 3 && !isLoading) {
-      setIsLoading(true);
-      try {
-        const res = await sendAnswer(id.toString(), text, from, to);
-        setModalSuccessVisible(true);
-        setIsLoading(false);
-      } catch (error) {
-        console.error(error);
-        setIsLoading(false);
-      }
+  async function toogleModal(typeModal: String) {
+    if (typeModal === "form") {
+      setModalVisible(false);
     }
-    setModaVisible(!modalVisible);
+
+    if (typeModal === "success") {
+      setModalSuccessVisible(false);
+    }
   }
 
   function onChangeText(event: any) {
     setText(event);
   }
 
+  async function onSendMessage() {
+    setIsLoading(true);
+    if (text.length > 3) {
+      try {
+        console.log("el mensaje");
+
+        const res = await sendAnswer(id.toString(), text, from, to, token);
+        console.log("response", res);
+        if (res.conversation_id) {
+          setIsLoading(true);
+          setModalVisible(false);
+          setModalSuccessVisible(true);
+        }
+      } catch (error) {
+        setIsLoading(true);
+        setModalVisible(false);
+        setModalErrorVisible(true);
+
+        //  console.error("elerrorro", error);
+      }
+    }
+  }
+
   return (
-    <>
-      <SafeAreaView style={styles.container}>
+    <SafeAreaView>
+      {!modalVisible ? (
+        <View>
+          <NavHeader
+            backgroundColor="black"
+            colorText="white"
+            textTitle={from}
+            image={product_image}
+            justifyContent="left"
+            onBackStepClicked={(step: any) => onBack(step)}
+            withRigthIcon
+          />
+          <View style={styles.content}>
+            <View style={styles.containerMessages}></View>
+            <View style={styles.containerFrom}>
+              <FlatList
+                data={detailMessages}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <View
+                    style={
+                      user.toString() === item.from
+                        ? styles.containerFromMessageOwn
+                        : styles.containerFromMessage
+                    }
+                  >
+                    <Text
+                      style={
+                        user.toString() == item.from
+                          ? styles.messageTextOwn
+                          : ""
+                      }
+                    >
+                      {item.message}
+                    </Text>
+                  </View>
+                )}
+                ListFooterComponent={
+                  isLoading ? (
+                    <ActivityIndicator style={{ margin: 10 }} />
+                  ) : null
+                }
+                onEndReached={() => {
+                  if (page < lastPage) {
+                    loadDetailMessages(page + 1);
+                  }
+                }}
+                onEndReachedThreshold={0.5}
+              />
+            </View>
+            <View style={styles.footer}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.button,
+                  pressed && { opacity: 0.8 },
+                ]}
+                onPress={() => toogleModal("form")}
+              >
+                <Text style={styles.textbutton}>Enviar Mensaje</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      ) : (
         <View>
           <Modal
             visible={modalVisible}
             transparent={true}
             animationType="slide"
           >
-            <TouchableOpacity style={styles.modalcontainer} >
+            <TouchableOpacity style={styles.modalcontainer}>
               <View style={styles.modalcontent}>
-                <View>
-                  <TextInput
-                    editable
-                    multiline
-                    numberOfLines={4}
-                    maxLength={800}
-                    onChangeText={(text) => onChangeText(text)}
-                    value={text}
-                    style={styles.input}
-                  />
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.button,
-                      styles.mt_16,
-                      pressed && { opacity: 0.8 },
-                    ]}
-                    onPress={() => toogleModal(true)}
-                  >
-                    <Text style={styles.textbutton}>Enviar Mensaje</Text>
-                  </Pressable>
-                </View>
+                {isLoading ? (
+                  <ActivityIndicator style={{ margin: 10 }} />
+                ) : (
+                  <View>
+                    <TextInput
+                      editable
+                      multiline
+                      numberOfLines={4}
+                      maxLength={800}
+                      onChangeText={(text) => onChangeText(text)}
+                      value={text}
+                      style={styles.input}
+                    />
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.button,
+                        styles.mt_16,
+                        pressed && { opacity: 0.8 },
+                      ]}
+                      onPress={() => onSendMessage()}
+                    >
+                      <Text style={styles.textbutton}>Enviar Mensaje</Text>
+                    </Pressable>
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
           </Modal>
@@ -133,78 +234,30 @@ export default function DetailInboxScreen() {
             animationType="slide"
           >
             <TouchableOpacity style={styles.modalcontainer}>
-              <View style={styles.modalcontent}>
-                <View>
-                  <Text>Mensaje enviado correctamente</Text>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.button,
-                      styles.mt_16,
-                      pressed && { opacity: 0.8 },
-                    ]}
-                    onPress={() => setModalSuccessVisible(false)}
-                  >
-                    <Text style={styles.textbutton}>Aceptar</Text>
-                  </Pressable>
+              {isLoading ? (
+                <ActivityIndicator style={{ margin: 10 }} />
+              ) : (
+                <View style={styles.modalcontent}>
+                  <View>
+                    <Text>Mensaje enviado correctamente</Text>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.button,
+                        styles.mt_16,
+                        pressed && { opacity: 0.8 },
+                      ]}
+                      onPress={() => toogleModal("success")}
+                    >
+                      <Text style={styles.textbutton}>Aceptar</Text>
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
+              )}
             </TouchableOpacity>
           </Modal>
         </View>
-        <NavHeader
-          backgroundColor="black"
-          colorText="white"
-          textTitle={from}
-          image={product_image}
-          justifyContent="left"
-          onBackStepClicked={(step: any) => onBack(step)}
-          withRigthIcon
-        />
-        <View style={styles.content}>
-
-          <View style={styles.containerMessages}></View>
-          <View style={styles.containerFrom}>
-
-            <FlatList
-              data={detailMessages}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <View
-                  style={
-                    user.toString() === item.from
-                      ? styles.containerFromMessageOwn
-                      : styles.containerFromMessage
-                  }
-                >
-                  <Text style={user.toString() == item.from ? styles.messageTextOwn: ''}>{item.message}</Text>
-                </View>
-              )}
-              ListFooterComponent={
-                loading ? <ActivityIndicator style={{ margin: 10 }} /> : null
-              }
-              onEndReached={() => {
-                if (page < lastPage) {
-                  loadDetailMessages(page + 1);
-                }
-              }}
-              onEndReachedThreshold={0.5}
-            />
-          </View>
-        </View>
-
-        <View style={styles.footer}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              pressed && { opacity: 0.8 },
-            ]}
-            onPress={() => toogleModal()}
-          >
-            <Text style={styles.textbutton}>Enviar Mensaje</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    </>
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -226,6 +279,11 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "column",
     paddingTop: 16,
+  },
+  containerLoader: {
+    display: "flex",
+    justifyContent: "center",
+    height: 100,
   },
 
   containerFrom: {
@@ -264,6 +322,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 16,
+    marginBottom: 16,
   },
   button: {
     marginBottom: 16,
@@ -302,7 +361,7 @@ const styles = StyleSheet.create({
   mt_16: {
     marginTop: 16,
   },
-  messageTextOwn:{
-    color: "white"
-  }
+  messageTextOwn: {
+    color: "white",
+  },
 });

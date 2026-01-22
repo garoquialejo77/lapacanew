@@ -3,7 +3,7 @@ import { FormContainer } from "@/components/FormContainer";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from "expo-router";
 import { useContext, useEffect, useState } from "react";
-import { StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { validationsNewProduct } from "../constants/validations";
 import { newProduct } from "./services/productService";
@@ -23,6 +23,7 @@ export default function NewProductScreen() {
   const [endProccess, setEndProcess] = useState(false)
   const {formData, setFormData, isSubmit, setIsSubmit} = useContext(FormContainerContext) as GlobalContent
   const [token, setToken] = useState("");
+  const [loading, setLoading] = useState(false);
   
   useEffect(()=>{
     const cargarToken = async () => {
@@ -47,13 +48,16 @@ export default function NewProductScreen() {
 
 
   async function onNewProduct(product: any,) {
+    setLoading(true);
     try{
       const responses = await newProduct(product, token);
       setSuccess(true)
+      setLoading(false);
     }catch(error : unknown){
       if(typeof(error)=== "string"){
         setError(true)
       }
+      setLoading(false);
     
     }
     setIsSubmit(false)
@@ -71,7 +75,7 @@ export default function NewProductScreen() {
   return (
     <>
       <SafeAreaProvider style={styles.container}>
-
+      {!loading ? (
         <FormContainer
           validations={validationsNewProduct}
           titleHeader="Nuevo Producto"
@@ -80,7 +84,9 @@ export default function NewProductScreen() {
           success={success}
           toogleError={onToogleError}
           toogleSuccess={onToogleSuccess}
-        ></FormContainer>
+        ></FormContainer>) :(
+          <View style={styles.containerLoader}><ActivityIndicator size="large"></ActivityIndicator></View>
+        )}
       </SafeAreaProvider>
     </>
   );
@@ -95,6 +101,11 @@ const styles = StyleSheet.create({
   link: {
     marginTop: 15,
     paddingVertical: 15,
+  },
+  containerLoader:{
+    display:"flex",
+    justifyContent:"center",
+    height:100
   },
 
 

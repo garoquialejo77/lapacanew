@@ -1,4 +1,4 @@
-export const sendMessage = async(message: string, to: string, from: string, product:string)=>{
+export const sendMessage = async(message: string, to: string, from: string, product:string, token:string)=>{
   let url = `${process.env.EXPO_PUBLIC_HOST}/api/conversation/`;
   try {
       const response = await fetch(
@@ -6,9 +6,8 @@ export const sendMessage = async(message: string, to: string, from: string, prod
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE",
+            "Accept": "application/json",
+            "Authorization": `Bearer ${token}`, 
           },
           body: JSON.stringify({
               message: message,
@@ -27,7 +26,7 @@ export const sendMessage = async(message: string, to: string, from: string, prod
     }
 }
 
-export const getMessages = async (page = 1, search="") => {
+export const getMessages = async (page = 1, search="", token:string ) => {
   let url = `${process.env.EXPO_PUBLIC_HOST}/api/conversation?page=${page}`;
   if (search) {
     url += `&search=${encodeURIComponent(search)}`;
@@ -38,9 +37,9 @@ try {
     {
       method: "GET",
       headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE",
+        "Accept": "application/json",
+        "Authorization": `Bearer ${token}`, 
+        "Content-Type": "application/json"
       },
     }
   )
@@ -52,7 +51,7 @@ try {
 }
 };
 
-export const getMessagesDetail = async (page = 1, search="") => {
+export const getMessagesDetail = async (page = 1, search="",token: string) => {
   let url = `${process.env.EXPO_PUBLIC_HOST}/api/conversationdetailid?page=${page}`;
   if (search) {
     url += `&search=${encodeURIComponent(search)}`;
@@ -63,9 +62,9 @@ try {
     {
       method: "GET",
       headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE",
+        "Accept": "application/json",
+        "Authorization": `Bearer ${token}`, 
+        "Content-Type": "application/json"
       },
     }
   )
@@ -77,7 +76,7 @@ try {
 }
 };
 
-export const sendAnswer = async(conversation_id: string, message: string, to: string, from: string)=>{
+export const sendAnswer = async(conversation_id: string, message: string, to: string, from: string, token: string)=>{
   let url = `${process.env.EXPO_PUBLIC_HOST}/api/conversationdetail/`;
   try {
       const response = await fetch(
@@ -85,9 +84,9 @@ export const sendAnswer = async(conversation_id: string, message: string, to: st
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE",
+            "Accept": "application/json",
+            "Authorization": `Bearer ${token}`, 
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
             conversation_id,
@@ -98,7 +97,7 @@ export const sendAnswer = async(conversation_id: string, message: string, to: st
         }
       )
         .then((response) => response.json())
-        .then((json) => console.log("la resúestaaa", json));
+        .then((json) => json);
 
       return response;
     } catch (error) {

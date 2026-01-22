@@ -1,13 +1,17 @@
 import { Card } from "@/components/Card";
 import { NavHeader } from "@/components/NavHeader";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from "expo-router";
 import { useContext, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SesionContext } from "../contexts/sesionProvider";
 import { getMessages } from "../services/messageService";
-
 
 type Message = {
   id: number;
@@ -17,7 +21,7 @@ type Message = {
   product: string | null;
   answered: string | null;
   reaction: string | null;
-  product_image : string;
+  product_image: string;
   product_title: string;
   created_at?: string;
   updated_at?: string;
@@ -30,38 +34,37 @@ type SesionContent = {
   setUser: (c: any) => void;
   messagesNumber: string;
   setMessagesNumber: (c: any) => void;
+  token: string;
 };
-
 
 export default function InboxScreen() {
   const [messages, setMessages] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [token, setToken] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  //const [token, setToken] = useState("");
 
-  const { isSessionSuccess, setIsSessionSuccess, user, setUser, messagesNumber, setMessagesNumber } = useContext(
-    SesionContext
-  ) as SesionContent;
+  const {
+    isSessionSuccess,
+    setIsSessionSuccess,
+    user,
+    setUser,
+    messagesNumber,
+    setMessagesNumber,
+    token,
+  } = useContext(SesionContext) as SesionContent;
 
-  useEffect(()=>{
-    const cargarToken = async () => {
-      const token = await AsyncStorage.getItem('auth');
-      if(token){
-        setToken(token);
-      }else{
-        router.replace('/login');
-      }
-
-    };
-
-    cargarToken();
-    loadMessages()
-  },[])
+  useEffect(() => {
+    if (isSessionSuccess) {
+      loadMessages();
+    } else {
+      router.replace("/login");
+    }
+  }, [isSessionSuccess]);
 
   function onBack(event: any) {
     router.replace("/");
-  } 
+  }
 
   function onPressCard(messageSelected: Message) {
     const {
@@ -75,7 +78,8 @@ export default function InboxScreen() {
       product_image,
       product_title,
       created_at,
-      updated_at} = messageSelected
+      updated_at,
+    } = messageSelected;
     router.push({
       pathname: "/detailinbox",
       params: {
@@ -89,18 +93,14 @@ export default function InboxScreen() {
         product_image,
         product_title,
         created_at,
-        updated_at
+        updated_at,
       },
     });
   }
 
-
-
   const loadMessages = async (pageNumber = 1) => {
-    if (loading) return;
-    setLoading(true);
     try {
-      const res = await getMessages(1, user);
+      const res = await getMessages(1, user, token);
 
       if (pageNumber === 1) {
         setMessages(res.data);
@@ -110,16 +110,16 @@ export default function InboxScreen() {
 
       setPage(res.current_page);
       setLastPage(res.last_page);
+      setIsLoading(false);
     } catch (error) {
-      console.error(error);
+      setIsLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <>
-       <SafeAreaView style={styles.container}>
-       <NavHeader
+      <SafeAreaView style={styles.container}>
+        <NavHeader
           backgroundColor="black"
           colorText="white"
           textTitle="Tus mensajes"
@@ -128,12 +128,15 @@ export default function InboxScreen() {
           withRigthIcon
         />
         <View>
-        <FlatList
+          <FlatList
             data={messages}
             style={styles.containerMessages}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <Pressable onPress={() => onPressCard(item)} style={styles.containerCard}>
+              <Pressable
+                onPress={() => onPressCard(item)}
+                style={styles.containerCard}
+              >
                 <Card
                   id={item.id}
                   title={item.from}
@@ -142,13 +145,11 @@ export default function InboxScreen() {
                   footer={item.message}
                   type="horizontal"
                   ellipsis={true}
-                  
                 />
               </Pressable>
             )}
-
             ListFooterComponent={
-              loading ? <ActivityIndicator style={{ margin: 10 }} /> : null
+              isLoading ? <ActivityIndicator style={{ margin: 10 }} /> : null
             }
             onEndReached={() => {
               if (page < lastPage) {
@@ -174,10 +175,9 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   containerMessages: {
-    padding:16
+    padding: 16,
   },
-  containerCard:{
-    marginTop: 16
-  }, 
+  containerCard: {
+    marginTop: 16,
+  },
 });
-
