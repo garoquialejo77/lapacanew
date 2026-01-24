@@ -1,7 +1,8 @@
 import { NavHeader } from "@/components/NavHeader";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -14,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { SesionContext } from "./contexts/sesionProvider";
 import { sendMessage } from "./services/messageService";
 
 
@@ -28,6 +30,16 @@ const data = [
 type ImageType = {
   id: string;
   image: string;
+};
+
+type SesionContent = {
+  isSessionSuccess: Boolean;
+  setIsSessionSuccess: (c: any) => void;
+  userLogued: string;
+  setUserLogued: (c: any) => void;
+  messagesNumber: string;
+  setMessagesNumber: (c: any) => void;
+  token: string;
 };
 
 export default function DetailProductScreen() {
@@ -52,6 +64,16 @@ export default function DetailProductScreen() {
     user,
   } = useLocalSearchParams();
 
+  const {
+    isSessionSuccess,
+    setIsSessionSuccess,
+    userLogued,
+    setUserLogued,
+    messagesNumber,
+    setMessagesNumber,
+    token,
+  } = useContext(SesionContext) as SesionContent;
+
 
   const handleScroll = (event: any) => {
     const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
@@ -73,15 +95,13 @@ export default function DetailProductScreen() {
   }
 
   async function toogleModal(isSubmit: Boolean) {
-    console.log("es submitt", isSubmit);
     if (isSubmit && text.length > 3 && !isLoading) {
       setIsLoading(true)
-      console.log("enviar mensaje", text);
-      console.log("el id", id)
       try {
-        const res = await sendMessage(text, user, "2", id.toString());
-        console.log("el ressss", res)
-        setModalSuccessVisible(true)
+        const res = await sendMessage(text, user.toString(), userLogued , id.toString(), token);
+        if(res.from){
+          setModalSuccessVisible(true)
+        }
         setIsLoading(false)
         
       } catch (error) {
@@ -110,7 +130,7 @@ export default function DetailProductScreen() {
             
             <TouchableOpacity style={styles.modalcontainer}   >
               <View style={styles.modalcontent}>
-                <View>
+                {!isLoading?               <View>
                   <TextInput
                     editable
                     multiline
@@ -130,7 +150,8 @@ export default function DetailProductScreen() {
                   >
                     <Text style={styles.textbutton}>Enviar Mensaje</Text>
                   </Pressable>
-                </View>
+                </View>: <ActivityIndicator style={{ margin: 10 }} />}
+ 
               </View>
             </TouchableOpacity>
           </Modal>
@@ -284,7 +305,6 @@ const styles = StyleSheet.create({
     color: "white",
   },
   footer: {
-    position: "absolute",
     width: "100%",
     bottom: 0,
     left: 0,

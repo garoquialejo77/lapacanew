@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, createContext, useEffect, useState } from "react"
+import React, { PropsWithChildren, createContext, useState } from "react"
 
 export type GlobalContent = {
     formData: any[] | undefined
@@ -20,9 +20,6 @@ export const FormContainerProvider = ({ children }: PropsWithChildren) => {
     const [formData, setFormData] =  useState([])
     const [isSubmit, setIsSubmit] =  useState(false)
 
-    useEffect(()=>{
-        console.log("issubmiiiii", isSubmit)
-      },[isSubmit])
 
     
     return (<FormContainerContext.Provider value={{formData, setFormData, isSubmit, setIsSubmit}}>{children}</FormContainerContext.Provider>)

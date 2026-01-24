@@ -19,10 +19,11 @@ import { sendLogin } from "./services/authService";
 type SesionContent = {
   isSessionSuccess: Boolean;
   setIsSessionSuccess: (c: any) => void;
-  user: string;
-  setUser: (c: any) => void;
+  userLogued: string;
+  setUserLogued: (c: any) => void;
   messagesNumber: string;
   setMessagesNumber: (c: any) => void;
+  setToken: (c: any) => void;
 };
 
 export default function LoginScreen() {
@@ -40,10 +41,11 @@ export default function LoginScreen() {
   const {
     isSessionSuccess,
     setIsSessionSuccess,
-    user,
-    setUser,
+    userLogued,
+    setUserLogued,
     messagesNumber,
     setMessagesNumber,
+    setToken
   } = useContext(SesionContext) as SesionContent;
 
   useEffect(() => {
@@ -59,7 +61,6 @@ export default function LoginScreen() {
   }
 
   async function toogleModal() {
-    console.log("modallll visible");
     setModalVisible(!modalVisible);
   }
 
@@ -73,7 +74,6 @@ export default function LoginScreen() {
   }
 
   async function onSendLogin() {
-    console.log("send login");
     setIsLoadingLogin(true);
     setModalLoginVisible(false);
     try {
@@ -82,22 +82,16 @@ export default function LoginScreen() {
       setModalLoginVisible(false);
      
       if (res?.access_token) {
-        console.log("ressss", res)
         await AsyncStorage.setItem('auth', res.access_token);
+        setIsSessionSuccess(true);
+        setToken(res.access_token)
         router.replace("/"); 
       }else{
-        console.log("con errorresss", res.error);
         setModalLoginVisible(true);
       }
     } catch (error) {
-      console.error("el errorr",error);
       setModalLoginVisible(true);
     }
-    //    setIsSessionSuccess(true);
-    //    setUser(1); //TODO  llamar al servicio
-    //    setSuccess(true);
-    //    toogleModal();
-    //    onGetMessages();
   }
 
   function onValidateForm() {

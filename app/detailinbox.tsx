@@ -19,8 +19,8 @@ import { getMessagesDetail, sendAnswer } from "./services/messageService";
 type SesionContent = {
   isSessionSuccess: Boolean;
   setIsSessionSuccess: (c: any) => void;
-  user: string;
-  setUser: (c: any) => void;
+  userLogued: string;
+  setUserLogued: (c: any) => void;
   messagesNumber: string;
   setMessagesNumber: (c: any) => void;
   token: string;
@@ -39,6 +39,7 @@ export default function DetailInboxScreen() {
     id,
     from,
     to,
+    user,
     message,
     product,
     answered,
@@ -52,8 +53,8 @@ export default function DetailInboxScreen() {
   const {
     isSessionSuccess,
     setIsSessionSuccess,
-    user,
-    setUser,
+    userLogued,
+    setUserLogued,
     messagesNumber,
     setMessagesNumber,
     token,
@@ -74,7 +75,7 @@ export default function DetailInboxScreen() {
   const loadDetailMessages = async (pageNumber = 1) => {
     setIsLoading(true);
     try {
-      const res = await getMessagesDetail(1, id.toString(), token);
+      const res = await getMessagesDetail(pageNumber, id.toString(), token);
       if (pageNumber === 1) {
         setDetailMessages(res.data);
       } else {
@@ -108,10 +109,7 @@ export default function DetailInboxScreen() {
     setIsLoading(true);
     if (text.length > 3) {
       try {
-        console.log("el mensaje");
-
-        const res = await sendAnswer(id.toString(), text, from, to, token);
-        console.log("response", res);
+        const res = await sendAnswer(id.toString(), text, userLogued, user.toString(), token);
         if (res.conversation_id) {
           setIsLoading(true);
           setModalVisible(false);
@@ -121,16 +119,14 @@ export default function DetailInboxScreen() {
         setIsLoading(true);
         setModalVisible(false);
         setModalErrorVisible(true);
-
-        //  console.error("elerrorro", error);
       }
     }
   }
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{ flex: 1 }}>
       {!modalVisible ? (
-        <View>
+       <View style={{ flex: 1 }}>
           <NavHeader
             backgroundColor="black"
             colorText="white"
@@ -141,22 +137,22 @@ export default function DetailInboxScreen() {
             withRigthIcon
           />
           <View style={styles.content}>
-            <View style={styles.containerMessages}></View>
             <View style={styles.containerFrom}>
               <FlatList
                 data={detailMessages}
                 keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={{ paddingBottom: 120 }}
                 renderItem={({ item }) => (
                   <View
                     style={
-                      user.toString() === item.from
+                      userLogued.toString() === item.from
                         ? styles.containerFromMessageOwn
                         : styles.containerFromMessage
                     }
                   >
                     <Text
                       style={
-                        user.toString() == item.from
+                        userLogued.toString() == item.from
                           ? styles.messageTextOwn
                           : ""
                       }
@@ -266,9 +262,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    flex: 1,
     padding: 16,
-    height: "100%",
-    width: "100%",
   },
   containerHeader: {
     display: "flex",
@@ -287,8 +282,7 @@ const styles = StyleSheet.create({
   },
 
   containerFrom: {
-    display: "flex",
-    flexDirection: "column",
+    flex: 1,
     width: "100%",
   },
 
@@ -321,8 +315,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
-    marginBottom: 16,
   },
   button: {
     marginBottom: 16,

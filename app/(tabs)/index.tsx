@@ -6,7 +6,6 @@ import { ThemedView } from "@/components/themed-view";
 import { validationsNewUser } from "@/constants/validations";
 import { validate } from "@/utils/validator";
 import { FontAwesome } from "@expo/vector-icons";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRootNavigation, useRouter } from 'expo-router';
 import { useContext, useEffect, useState } from "react";
 import {
@@ -18,7 +17,7 @@ import {
   View
 } from "react-native";
 import { SesionContext } from "../contexts/sesionProvider";
-import { sendMe, sendRegister } from "../services/authService";
+import { sendRegister } from "../services/authService";
 import { getMessages } from "../services/messageService";
 import { getProducts } from "../services/productService";
 
@@ -40,8 +39,8 @@ type Product = {
 type SesionContent = {
   isSessionSuccess: Boolean;
   setIsSessionSuccess: (c: any) => void;
-  user: string;
-  setUser: (c: any) => void;
+  userLogued: string;
+  setUserLogued: (c: any) => void;
   messagesNumber: string;
   setMessagesNumber: (c: any) => void;
 };
@@ -70,8 +69,8 @@ export default function HomeScreen() {
   const {
     isSessionSuccess,
     setIsSessionSuccess,
-    user,
-    setUser,
+    userLogued,
+    setUserLogued,
     messagesNumber,
     setMessagesNumber,
   } = useContext(SesionContext) as SesionContent;
@@ -91,22 +90,6 @@ export default function HomeScreen() {
     setPage(1);
   }
 
-  async function validateToken(tokenTemp : string){
-    console.log("el token", token)
-    try{
-      const responses = await sendMe(tokenTemp);
-      console.log("responseeeee", responses.message)
-      if(responses.message === "Unauthenticated."){
-        console.log("mensjae",responses.message)
-        AsyncStorage.removeItem("auth")
-      }
-    }catch(error : unknown){
-      console.log("el errror", error)
-
-    
-    }
-
-  }
 
   function onChangeName(event: any) {
     setName(event);
@@ -125,20 +108,9 @@ export default function HomeScreen() {
     onValidateForm();
   }
 
-  async function cargarToken  ()  {
-    const tokenTemp = await AsyncStorage.getItem('auth');
-    if(tokenTemp){
-     // await setToken(token);
-      await validateToken(tokenTemp)
-    }
-
-  };
 
   const loadProducts = async (pageNumber = 1, search = "") => {
-    console.log("cargar productos")
-
-
-    cargarToken();
+ 
     if (loading) return;
     setLoading(true);
     try {
@@ -187,14 +159,10 @@ export default function HomeScreen() {
   }
 
   async function toogleModal() {
-    console.log("modallll visible");
     setModalVisible(!modalVisible);
   }
 
   function onLogin() {
-  //  setModalVisible(false);
-  //  setModalRegisterVisible(false);
-  //  setModalLoginVisible(true);
   router.replace('/login')
   }
 
@@ -208,13 +176,7 @@ export default function HomeScreen() {
   }
 
   function onSendLogin() {
-    console.log("send login");
     setModalLoginVisible(false);
-    //    setIsSessionSuccess(true);
-    //    setUser(1); //TODO  llamar al servicio
-    //    setSuccess(true);
-    //    toogleModal();
-    //    onGetMessages();
   }
 
   async function onSendRegister() {
@@ -237,11 +199,6 @@ export default function HomeScreen() {
     data.forEach((key, index) => {
       validated =
         validated && validate(key, validationsNewUser[index].validations);
-      console.log(
-        "es valdiadoooooo",
-        validationsNewUser[index].validations.field,
-        validate(key, validationsNewUser[index].validations)
-      );
     });
 
     setIsRegisterValidated(validated && confirmPassword === password);
@@ -249,7 +206,7 @@ export default function HomeScreen() {
 
   async function onGetMessages() {
     try {
-      const res = await getMessages(1, user);
+      const res = await getMessages(1, userLogued, token);
       setMessagesNumber(res.total.toString());
     } catch (error) {
       console.error(error);

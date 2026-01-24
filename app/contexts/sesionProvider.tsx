@@ -10,8 +10,8 @@ import { sendMe } from "../services/authService";
 export type SesionContent = {
   isSessionSuccess: Boolean;
   setIsSessionSuccess: (c: any) => void;
-  user: string;
-  setUser: (c: any) => void;
+  userLogued: string;
+  setUserLogued: (c: any) => void;
   messagesNumber: string;
   setMessagesNumber: (c: any) => void;
   token: string;
@@ -21,8 +21,8 @@ export type SesionContent = {
 export const SesionContext = createContext<SesionContent | null>({
   isSessionSuccess: false,
   setIsSessionSuccess: () => {},
-  user: "",
-  setUser:  () => {},
+  userLogued: "",
+  setUserLogued:  () => {},
   messagesNumber: "",
   setMessagesNumber:  () => {},
   token: "",
@@ -31,7 +31,7 @@ export const SesionContext = createContext<SesionContent | null>({
 
 export const SesionProvider = ({ children }: PropsWithChildren) => {
   const [isSessionSuccess, setIsSessionSuccess] = useState(false);
-  const [user, setUser] = useState("");
+  const [userLogued, setUserLogued] = useState("");
   const [messagesNumber, setMessagesNumber] = useState("");
   const [token, setToken] = useState("");
 
@@ -51,6 +51,7 @@ export const SesionProvider = ({ children }: PropsWithChildren) => {
           setToken("")
         } else {
           setIsSessionSuccess(true)
+          setUserLogued(responses.id)
           setToken(tokenTemp)
         }
       } catch (error: unknown) {
@@ -65,7 +66,7 @@ export const SesionProvider = ({ children }: PropsWithChildren) => {
   
 
   return (
-    <SesionContext.Provider value={{ isSessionSuccess, setIsSessionSuccess, user, setUser, messagesNumber, setMessagesNumber, token, setToken }}>
+    <SesionContext.Provider value={{ isSessionSuccess, setIsSessionSuccess, userLogued, setUserLogued, messagesNumber, setMessagesNumber, token, setToken }}>
       {children}
     </SesionContext.Provider>
   );

@@ -30,8 +30,8 @@ type Message = {
 type SesionContent = {
   isSessionSuccess: Boolean;
   setIsSessionSuccess: (c: any) => void;
-  user: string;
-  setUser: (c: any) => void;
+  userLogued: string;
+  setUserLogued: (c: any) => void;
   messagesNumber: string;
   setMessagesNumber: (c: any) => void;
   token: string;
@@ -42,13 +42,12 @@ export default function InboxScreen() {
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  //const [token, setToken] = useState("");
 
   const {
     isSessionSuccess,
     setIsSessionSuccess,
-    user,
-    setUser,
+    userLogued,
+    setUserLogued,
     messagesNumber,
     setMessagesNumber,
     token,
@@ -100,7 +99,7 @@ export default function InboxScreen() {
 
   const loadMessages = async (pageNumber = 1) => {
     try {
-      const res = await getMessages(1, user, token);
+      const res = await getMessages(1, userLogued, token);
 
       if (pageNumber === 1) {
         setMessages(res.data);

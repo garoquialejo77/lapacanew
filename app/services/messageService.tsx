@@ -7,6 +7,7 @@ export const sendMessage = async(message: string, to: string, from: string, prod
           method: "POST",
           headers: {
             "Accept": "application/json",
+            "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`, 
           },
           body: JSON.stringify({
@@ -18,7 +19,7 @@ export const sendMessage = async(message: string, to: string, from: string, prod
         }
       )
         .then((response) => response.json())
-        .then((json) => console.log("la resúestaaa", json));
+        .then((json) => json);
 
       return response;
     } catch (error) {
