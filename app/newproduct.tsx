@@ -1,11 +1,10 @@
 import { FormContainerContext } from "@/app/contexts/formContainerProvider";
 import { FormContainer } from "@/components/FormContainer";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from "expo-router";
 import { useContext, useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { validationsNewProduct } from "../constants/validations";
+import { SesionContext } from "./contexts/sesionProvider";
 import { newProduct } from "./services/productService";
 
 export type GlobalContent = {
@@ -13,7 +12,19 @@ export type GlobalContent = {
   setFormData:(c: any) => void
   isSubmit: false, // set a default value
   setIsSubmit: (c: any) => void
-} 
+}
+
+type SesionContent = {
+  isSessionSuccess: Boolean;
+  setIsSessionSuccess: (c: any) => void;
+  userLogued: string;
+  setUserLogued: (c: any) => void;
+  messagesNumber: string;
+  setMessagesNumber: (c: any) => void;
+  token: string;
+  setCurrentPage: (c: any) => void;
+  currentPage: string;
+};
 
 
 export default function NewProductScreen() {
@@ -22,25 +33,23 @@ export default function NewProductScreen() {
   const [success, setSuccess] = useState(false)
   const [endProccess, setEndProcess] = useState(false)
   const {formData, setFormData, isSubmit, setIsSubmit} = useContext(FormContainerContext) as GlobalContent
-  const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const {
+    isSessionSuccess,
+    setIsSessionSuccess,
+    userLogued,
+    setUserLogued,
+    messagesNumber,
+    setMessagesNumber,
+    token,
+    currentPage,
+    setCurrentPage
+  } = useContext(SesionContext) as SesionContent;
   
   useEffect(()=>{
-    const cargarToken = async () => {
-      const token = await AsyncStorage.getItem('auth');
-      if(token){
-        setToken(token);
-      }else{
-        router.replace('/login');
-      }
-
-    };
-
-    cargarToken();
-    if(endProccess){
-      router.replace("/");
-    }
-
+    setCurrentPage("add")
+    
     if(isSubmit){
       onNewProduct(formData)
     }

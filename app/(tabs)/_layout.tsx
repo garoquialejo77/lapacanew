@@ -12,15 +12,15 @@ import { SesionContext } from "../contexts/sesionProvider";
 type SesionContent = {
   isSessionSuccess: Boolean;
   setIsSessionSuccess: (c: any) => void;
-  user: string;
-  setUser: (c: any) => void;
+  userLogued: string;
+  setUserLogued: (c: any) => void;
   messagesNumber: string;
   setMessagesNumber: (c: any) => void;
 };
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { isSessionSuccess, setIsSessionSuccess, user, setUser, messagesNumber, setMessagesNumber } = useContext(
+  const { isSessionSuccess, setIsSessionSuccess, userLogued, setUserLogued, messagesNumber, setMessagesNumber } = useContext(
     SesionContext
   ) as SesionContent;
 
@@ -51,7 +51,7 @@ export default function TabLayout() {
         options={{
           title: "Buzón",
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="mail.fill" color={color} />,
-          tabBarBadge: messagesNumber
+          tabBarBadge: messagesNumber || "0"
         }}
       />
     </Tabs>

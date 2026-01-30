@@ -104,11 +104,17 @@ export const newProduct = async (product: any, token:string): Promise<any> => {
   }
 };
 
-export const getProducts = async (page = 1, search="") => {
+export const getProducts = async (page = 1, search="", user="") => {
     let url = `${process.env.EXPO_PUBLIC_HOST}/api/product?page=${page}`;
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
     }
+
+    if(user){
+      url += `&user=${encodeURIComponent(user)}`;
+    }
+
+    console.log("el user", user)
   try {
     const response = await fetch(
        url,

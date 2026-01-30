@@ -1,12 +1,7 @@
 import { Card } from "@/components/Card";
 import { NavHeader } from "@/components/NavHeader";
-import { HelloWave } from "@/components/hello-wave";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { validationsNewUser } from "@/constants/validations";
-import { validate } from "@/utils/validator";
 import { FontAwesome } from "@expo/vector-icons";
-import { useRootNavigation, useRouter } from "expo-router";
+import { useRootNavigation, useRouter } from 'expo-router';
 import { useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,11 +9,10 @@ import {
   Pressable,
   StyleSheet,
   TextInput,
-  View,
+  View
 } from "react-native";
-import { SesionContext } from "../contexts/sesionProvider";
-import { sendRegister } from "../services/authService";
-import { getProducts } from "../services/productService";
+import { SesionContext } from "./contexts/sesionProvider";
+import { getProducts } from "./services/productService";
 
 type Product = {
   id: number;
@@ -46,8 +40,8 @@ type SesionContent = {
   currentPage: string;
 };
 
-export default function HomeScreen() {
-  const rootNavigation = useRootNavigation();
+export default function ProductsScreen() {
+  const rootNavigation = useRootNavigation ();
   const [modalVisible, setModalVisible] = useState(false);
   const [modalRegisterVisible, setModalRegisterVisible] = useState(false);
   const [modalLoginVisible, setModalLoginVisible] = useState(false);
@@ -60,11 +54,9 @@ export default function HomeScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [page, setPage] = useState(1);
-  const [success, setSuccess] = useState(false);
   const [lastPage, setLastPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [isLoadingRegister, setIsLoadingRegister] = useState(false);
-  const [token, setToken] = useState("");
   const router = useRouter();
 
   const {
@@ -75,47 +67,29 @@ export default function HomeScreen() {
     messagesNumber,
     setMessagesNumber,
     currentPage,
-    setCurrentPage,
+    setCurrentPage
   } = useContext(SesionContext) as SesionContent;
 
   useEffect(() => {
-    setCurrentPage("index");
-    loadProducts();
+  setCurrentPage("products")
+  // loadProducts();
     if (text) {
       loadProducts(page, text);
     }
-
-    onValidateForm();
-  }, [text, email, password, confirmPassword, success]);
+  }, [text]);
 
   function onChangeText(event: any) {
     setText(event);
     setPage(1);
   }
 
-  function onChangeName(event: any) {
-    setName(event);
-  }
-
-  function onChangeEmail(event: any) {
-    setEmail(event);
-  }
-
-  function onChangePassword(event: any) {
-    setPassword(event);
-  }
-
-  function onChangeConfirmPassword(event: any) {
-    setConfirmPassword(event);
-    onValidateForm();
-  }
 
   const loadProducts = async (pageNumber = 1, search = "") => {
+ 
     if (loading) return;
     setLoading(true);
     try {
-      const res = await getProducts(pageNumber, search);
-      setSuccess(true);
+      const res = await getProducts(pageNumber, search, userLogued);
       if (pageNumber === 1) {
         setProducts(res.data);
       } else {
@@ -158,54 +132,10 @@ export default function HomeScreen() {
     });
   }
 
-  async function toogleModal() {
-    setModalVisible(!modalVisible);
-  }
-
-  function onLogin() {
-    router.replace("/login");
-  }
-
-  function onRegister() {
-    setModalVisible(false);
-    setModalRegisterVisible(true);
-  }
-
-  function onCancel() {
-    setModalRegisterVisible(false);
-  }
-
-  function onSendLogin() {
-    setModalLoginVisible(false);
-  }
-
-  async function onSendRegister() {
-    setIsLoadingRegister(true);
-    try {
-      const res = await sendRegister(name, email, password);
-      setIsLoadingRegister(false);
-      setModalRegisterVisible(false);
-      if (res?.errors) {
-        console.log("con errorresss", res.errors);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  function onValidateForm() {
-    let validated = true;
-    const data = [{ value: name }, { value: email }, { value: password }];
-    data.forEach((key, index) => {
-      validated =
-        validated && validate(key, validationsNewUser[index].validations);
-    });
-
-    setIsRegisterValidated(validated && confirmPassword === password);
-  }
-
   return (
-    <View style={{ flex: 1 }}>
+<View style={{ flex: 1 }}>
+
+
       {!loading ? (
         <View style={{ flex: 1 }}>
           <NavHeader
@@ -233,24 +163,16 @@ export default function HomeScreen() {
             data={products}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <Pressable
-                onPress={() => onPressCard(item)}
-                style={styles.containerCard}
-              >
+              <Pressable onPress={() => onPressCard(item)} style={styles.containerCard}>
                 <Card
                   id={item.id}
                   title={item.title}
                   image={item.image1}
                   footer={item.price}
+                  
                 />
               </Pressable>
             )}
-            ListHeaderComponent={
-              <ThemedView style={styles.titleContainer}>
-                <ThemedText type="title">Pacas de Hoy!</ThemedText>
-                <HelloWave />
-              </ThemedView>
-            }
             ListFooterComponent={
               loading ? <ActivityIndicator style={{ margin: 10 }} /> : null
             }
@@ -263,9 +185,7 @@ export default function HomeScreen() {
           />
         </View>
       ) : (
-        <View style={styles.containerLoader}>
-          <ActivityIndicator size="large"></ActivityIndicator>
-        </View>
+        <View style={styles.containerLoader}><ActivityIndicator size="large"></ActivityIndicator></View>
       )}
     </View>
   );
@@ -273,15 +193,15 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
+    flex: 1
+},
   content: {
     padding: 16,
   },
-  containerLoader: {
-    display: "flex",
-    justifyContent: "center",
-    height: 100,
+  containerLoader:{
+    display:"flex",
+    justifyContent:"center",
+    height:100
   },
   titleContainer: {
     flexDirection: "row",
@@ -317,9 +237,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "white",
   },
-  containerCard: {
-    marginTop: 16,
-  },
+  containerCard:{
+    marginTop: 16
+  },  
   mt_16: {
     marginTop: 16,
   },

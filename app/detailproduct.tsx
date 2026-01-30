@@ -18,7 +18,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { SesionContext } from "./contexts/sesionProvider";
 import { sendMessage } from "./services/messageService";
 
-
 const { width } = Dimensions.get("window");
 
 const data = [
@@ -40,6 +39,8 @@ type SesionContent = {
   messagesNumber: string;
   setMessagesNumber: (c: any) => void;
   token: string;
+  setCurrentPage: (c: any) => void;
+  currentPage: string;
 };
 
 export default function DetailProductScreen() {
@@ -48,7 +49,7 @@ export default function DetailProductScreen() {
   const [modalVisible, setModaVisible] = useState(false);
   const [modalSuccessVisible, setModalSuccessVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [index, setIndex] = useState(0);
   const [images, setImages] = useState<ImageType[]>([]);
   const flatListRef = useRef(null);
@@ -72,8 +73,9 @@ export default function DetailProductScreen() {
     messagesNumber,
     setMessagesNumber,
     token,
+    currentPage,
+    setCurrentPage,
   } = useContext(SesionContext) as SesionContent;
-
 
   const handleScroll = (event: any) => {
     const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
@@ -81,6 +83,7 @@ export default function DetailProductScreen() {
   };
 
   useEffect(() => {
+    setCurrentPage("detailproduct");
     const imagesList = [image1, image2, image3, image4]
       .map((image, index) => ({
         id: index.toString(),
@@ -96,23 +99,28 @@ export default function DetailProductScreen() {
 
   async function toogleModal(isSubmit: Boolean) {
     if (isSubmit && text.length > 3 && !isLoading) {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
-        const res = await sendMessage(text, user.toString(), userLogued , id.toString(), token);
-        if(res.from){
-          setModalSuccessVisible(true)
+        const res = await sendMessage(
+          text,
+          user.toString(),
+          userLogued,
+          id.toString(),
+          token
+        );
+        if (res.from) {
+          setModalSuccessVisible(true);
+        } else {
+          console.log("errorr");
         }
-        setIsLoading(false)
-        
+        setIsLoading(false);
       } catch (error) {
         console.error(error);
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
     setModaVisible(!modalVisible);
   }
-
-  
 
   function onChangeText(event: any) {
     setText(event);
@@ -127,31 +135,33 @@ export default function DetailProductScreen() {
             transparent={true}
             animationType="slide"
           >
-            
-            <TouchableOpacity style={styles.modalcontainer}   >
+            <TouchableOpacity style={styles.modalcontainer}>
               <View style={styles.modalcontent}>
-                {!isLoading?               <View>
-                  <TextInput
-                    editable
-                    multiline
-                    numberOfLines={4}
-                    maxLength={800}
-                    onChangeText={(text) => onChangeText(text)}
-                    value={text}
-                    style={styles.input}
-                  />
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.button,
-                      styles.mt_16,
-                      pressed && { opacity: 0.8 },
-                    ]}
-                    onPress={() => toogleModal(true)}
-                  >
-                    <Text style={styles.textbutton}>Enviar Mensaje</Text>
-                  </Pressable>
-                </View>: <ActivityIndicator style={{ margin: 10 }} />}
- 
+                {!isLoading ? (
+                  <View>
+                    <TextInput
+                      editable
+                      multiline
+                      numberOfLines={4}
+                      maxLength={800}
+                      onChangeText={(text) => onChangeText(text)}
+                      value={text}
+                      style={styles.input}
+                    />
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.button,
+                        styles.mt_16,
+                        pressed && { opacity: 0.8 },
+                      ]}
+                      onPress={() => toogleModal(true)}
+                    >
+                      <Text style={styles.textbutton}>Enviar Mensaje</Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <ActivityIndicator style={{ margin: 10 }} />
+                )}
               </View>
             </TouchableOpacity>
           </Modal>
@@ -159,7 +169,6 @@ export default function DetailProductScreen() {
             visible={modalSuccessVisible}
             transparent={true}
             animationType="slide"
-            
           >
             <TouchableOpacity style={styles.modalcontainer}>
               <View style={styles.modalcontent}>
@@ -253,7 +262,7 @@ const styles = StyleSheet.create({
     height: 350,
     justifyContent: "center",
     alignItems: "center",
-    padding:16
+    padding: 16,
   },
   text: { fontSize: 22, color: "#fff" },
   dots: {

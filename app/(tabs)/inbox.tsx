@@ -35,6 +35,8 @@ type SesionContent = {
   messagesNumber: string;
   setMessagesNumber: (c: any) => void;
   token: string;
+  setCurrentPage: (c: any) => void;
+  currentPage: string;
 };
 
 export default function InboxScreen() {
@@ -51,10 +53,13 @@ export default function InboxScreen() {
     messagesNumber,
     setMessagesNumber,
     token,
+    currentPage,
+    setCurrentPage
   } = useContext(SesionContext) as SesionContent;
 
   useEffect(() => {
-    if (isSessionSuccess) {
+    setCurrentPage("inbox")
+    if (userLogued) {
       loadMessages();
     } else {
       router.replace("/login");
@@ -99,7 +104,7 @@ export default function InboxScreen() {
 
   const loadMessages = async (pageNumber = 1) => {
     try {
-      const res = await getMessages(1, userLogued, token);
+      const res = await getMessages(1, "1", token);
 
       if (pageNumber === 1) {
         setMessages(res.data);

@@ -1,12 +1,11 @@
-import { View } from "react-native";
-import { FormContainerPhoto } from "./FormContainerPhoto";
-import { StyleSheet } from "react-native";
-import { useState, useEffect } from "react";
-import { FormContainerInputText } from "./FormContainerInputText";
-import { FormContainerInputArea } from "./FormContainerInputArea";
-import { NavHeader } from "./NavHeader";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
+import { StyleSheet, View } from "react-native";
 import { FormContainerCard } from "./FormContainerCard";
+import { FormContainerInputArea } from "./FormContainerInputArea";
+import { FormContainerInputText } from "./FormContainerInputText";
+import { FormContainerPhoto } from "./FormContainerPhoto";
+import { NavHeader } from "./NavHeader";
 
 export type GlobalContent = {
   formData: any;
@@ -145,6 +144,6 @@ const styles = StyleSheet.create({
     height: "90%",
   },
   header: {
-    height: "8%",
+    height: "12%",
   },
 });

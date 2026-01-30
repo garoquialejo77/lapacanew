@@ -24,6 +24,7 @@ type SesionContent = {
   messagesNumber: string;
   setMessagesNumber: (c: any) => void;
   token: string;
+  setCurrentPage: (c: any) => void;
 };
 
 export default function DetailInboxScreen() {
@@ -58,15 +59,18 @@ export default function DetailInboxScreen() {
     messagesNumber,
     setMessagesNumber,
     token,
+    setCurrentPage
   } = useContext(SesionContext) as SesionContent;
 
   useEffect(() => {
-    if (isSessionSuccess) {
+    setCurrentPage("detailinbox")
+    if (userLogued) {
       loadDetailMessages();
     } else {
       router.replace("/login");
     }
-  }, [isSessionSuccess]);
+    console.log("enviado aqui", modalSuccessVisible)
+  }, [isSessionSuccess,modalSuccessVisible]);
 
   function onBack(event: any) {
     router.replace("/inbox");
@@ -93,11 +97,13 @@ export default function DetailInboxScreen() {
 
   async function toogleModal(typeModal: String) {
     if (typeModal === "form") {
-      setModalVisible(false);
+      setModalSuccessVisible(false);
+      setModalVisible(true);
     }
 
     if (typeModal === "success") {
       setModalSuccessVisible(false);
+      setModalVisible(false);
     }
   }
 
@@ -109,17 +115,20 @@ export default function DetailInboxScreen() {
     setIsLoading(true);
     if (text.length > 3) {
       try {
-        const res = await sendAnswer(id.toString(), text, userLogued, user.toString(), token);
+        const res = await sendAnswer(id.toString(), text, userLogued, to.toString(), token);
         if (res.conversation_id) {
-          setIsLoading(true);
+  
           setModalVisible(false);
           setModalSuccessVisible(true);
+          console.log("enviado aqui", modalSuccessVisible)
         }
       } catch (error) {
-        setIsLoading(true);
+        setIsLoading(false);
         setModalVisible(false);
         setModalErrorVisible(true);
       }
+    }else{
+      setModalErrorVisible(true);
     }
   }
 

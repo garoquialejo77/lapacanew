@@ -1,10 +1,10 @@
-import { Image, View, StyleSheet, Modal, Text, Pressable } from "react-native";
-import { useState, useEffect, useContext } from "react";
-import * as ImagePicker from "expo-image-picker";
+import { FormContainerContext } from "@/app/contexts/formContainerProvider";
+import { validate } from "@/utils/validator";
 import { Ionicons } from "@expo/vector-icons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { validate } from "@/utils/validator";
-import { FormContainerContext } from "@/app/contexts/formContainerProvider";
+import * as ImagePicker from "expo-image-picker";
+import { useContext, useEffect, useState } from "react";
+import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 export type GlobalContent = {
   formData: any[];

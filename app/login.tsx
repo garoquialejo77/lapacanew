@@ -14,7 +14,7 @@ import {
   View
 } from "react-native";
 import { SesionContext } from "./contexts/sesionProvider";
-import { sendLogin } from "./services/authService";
+import { sendLogin, sendMe } from "./services/authService";
 
 type SesionContent = {
   isSessionSuccess: Boolean;
@@ -50,7 +50,8 @@ export default function LoginScreen() {
 
   useEffect(() => {
     onValidateForm();
-  }, [email, password]);
+    console.log("logueado", userLogued)
+  }, [email, password, userLogued]);
 
   function onChangeEmail(event: any) {
     setEmail(event);
@@ -85,6 +86,9 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('auth', res.access_token);
         setIsSessionSuccess(true);
         setToken(res.access_token)
+        const responses = await sendMe(res.access_token);
+        console.log("responseeesssss",responses)
+        setUserLogued(responses.id)
         router.replace("/"); 
       }else{
         setModalLoginVisible(true);

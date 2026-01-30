@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from "expo-router";
 import React, {
   PropsWithChildren,
   createContext,
@@ -16,6 +17,8 @@ export type SesionContent = {
   setMessagesNumber: (c: any) => void;
   token: string;
   setToken: (c: any) => void;
+  currentPage: string;
+  setCurrentPage: (c: any) => void;
 };
 
 export const SesionContext = createContext<SesionContent | null>({
@@ -27,6 +30,8 @@ export const SesionContext = createContext<SesionContent | null>({
   setMessagesNumber:  () => {},
   token: "",
   setToken:  () => {},
+  currentPage: "",
+  setCurrentPage:  () => {},
 });
 
 export const SesionProvider = ({ children }: PropsWithChildren) => {
@@ -34,10 +39,13 @@ export const SesionProvider = ({ children }: PropsWithChildren) => {
   const [userLogued, setUserLogued] = useState("");
   const [messagesNumber, setMessagesNumber] = useState("");
   const [token, setToken] = useState("");
+  const [currentPage, setCurrentPage] = useState("");
 
   useEffect(()=>{
     validateToken()
-  },[])
+    console.log("aquiuiu",userLogued)
+
+  },[currentPage, userLogued])
   
   async function validateToken() {
     const tokenTemp = await AsyncStorage.getItem("auth");
@@ -49,16 +57,17 @@ export const SesionProvider = ({ children }: PropsWithChildren) => {
           AsyncStorage.removeItem("auth");
           setIsSessionSuccess(false)
           setToken("")
-        } else {
-          setIsSessionSuccess(true)
-          setUserLogued(responses.id)
+        }else{
           setToken(tokenTemp)
-        }
+          setUserLogued(responses.id)
+        } 
       } catch (error: unknown) {
         console.log("el errror", error);
         setIsSessionSuccess(false)
         setToken("")
       }
+    }else{
+      router.replace("/login");
     }
 
 
@@ -66,7 +75,7 @@ export const SesionProvider = ({ children }: PropsWithChildren) => {
   
 
   return (
-    <SesionContext.Provider value={{ isSessionSuccess, setIsSessionSuccess, userLogued, setUserLogued, messagesNumber, setMessagesNumber, token, setToken }}>
+    <SesionContext.Provider value={{ isSessionSuccess, setIsSessionSuccess, userLogued, setUserLogued, messagesNumber, setMessagesNumber, token, setToken, currentPage, setCurrentPage }}>
       {children}
     </SesionContext.Provider>
   );
